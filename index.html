@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simetri Frieze (v1.6 - Unduh Gambar)</title>
+
+    <style>
+        :root {
+            --bg-color: #f8f9fa;
+            --card-bg: #ffffff;
+            --card-border: #dee2e6;
+            --canvas-border: #ced4da;
+            --text-color: #212529;
+            --text-muted: #6c757d;
+            --primary-color: #0d6efd;
+            --primary-hover: #0b5ed7;
+            --danger-color: #dc3545;
+            --danger-hover: #bb2d3b;
+            --success-color: #198754;
+            --success-hover: #157347;
+            --info-color: #0dcaf0; /* Added info color for download button */
+            --info-hover: #31d2f2;
+            --hover-bg: #e9ecef;
+            --selected-bg: #cfe2ff;
+            --selected-border: #9ec5fe;
+            --disabled-opacity: 0.5;
+            --shadow-color: rgba(0, 0, 0, 0.075);
+            --input-border: #ced4da;
+            --input-focus-border: #86b7fe;
+            --input-focus-shadow: rgba(13, 110, 253, 0.25);
+
+            --grid-color: #b0bec5;
+            --grid-mid-color: #90a4ae;
+            --grid-reflect-color: #f1948a;
+            --grid-glide-color: #76d7c4;
+            --grid-rot-color: #af7ac5;
+
+            --canvas-width: 1264px;
+            --canvas-height: 140px;
+            --controls-max-width: 1264px;
+            --border-radius: 0.375rem;
+            --spacing: 1rem;
+        }
+
+        *, *::before, *::after { box-sizing: border-box; }
+
+        body {
+            font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", "Noto Sans", "Liberation Sans", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+            display: flex; flex-direction: column; align-items: center;
+            background-color: var(--bg-color); color: var(--text-color);
+            margin: 0; padding: calc(var(--spacing) * 1.5); min-height: 100vh;
+        }
+
+        .main-container {
+            width: 100%; max-width: var(--controls-max-width);
+            display: flex; flex-direction: column;
+            gap: calc(var(--spacing) * 1.25);
+        }
+
+        h1 { margin-top: 0; margin-bottom: 0.5rem; font-weight: 500; text-align: center; color: var(--text-color); }
+        .info-link { margin-bottom: var(--spacing); color: var(--text-muted); font-size: 0.95em; text-align: center; }
+        .info-link button { background: none; border: none; color: var(--primary-color); text-decoration: underline; cursor: pointer; padding: 0; font-size: inherit; font-family: inherit; }
+        .info-link button:hover { color: var(--primary-hover); }
+
+        .canvas-container {
+            position: relative; border: 1px solid var(--canvas-border); background-color: white;
+            width: 100%; max-width: var(--canvas-width); height: var(--canvas-height);
+            box-shadow: 0 0.125rem 0.25rem var(--shadow-color); overflow: hidden;
+            margin-left: auto; margin-right: auto; border-radius: var(--border-radius);
+        }
+
+        #drawingCanvas, #gridCanvas { display: block; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-color: transparent; }
+        #drawingCanvas { position: relative; z-index: 0; background-color: white; }
+        /* Cursor Classes */
+        .cursor-pencil { cursor: url('pencil.png') 0 16, crosshair; }
+        .cursor-crosshair { cursor: crosshair; }
+        .cursor-default { cursor: default; }
+
+        #gridCanvas { pointer-events: none; z-index: 1; }
+
+        /* Controls Styling */
+        .controls-card { background-color: var(--card-bg); padding: calc(var(--spacing) * 1.25); border: 1px solid var(--card-border); border-radius: var(--border-radius); box-shadow: 0 0.125rem 0.25rem var(--shadow-color); width: 100%; max-width: var(--controls-max-width); margin-left: auto; margin-right: auto; }
+        .controls-top { display: flex; flex-wrap: wrap; gap: calc(var(--spacing) * 0.75); align-items: center; justify-content: center; margin-bottom: var(--spacing); padding-bottom: var(--spacing); border-bottom: 1px solid var(--card-border); }
+
+        /* General Button Style */
+        .btn { display: inline-block; font-weight: 400; line-height: 1.5; color: var(--text-color); text-align: center; text-decoration: none; vertical-align: middle; cursor: pointer; user-select: none; background-color: transparent; border: 1px solid transparent; padding: 0.375rem 0.75rem; font-size: 0.9rem; border-radius: var(--border-radius); transition: color .15s ease-in-out,background-color .15s ease-in-out,border-color .15s ease-in-out,box-shadow .15s ease-in-out; }
+        .btn:disabled { pointer-events: none; opacity: var(--disabled-opacity); }
+        /* Button Variants */
+        .btn-light { color: #000; background-color: #f8f9fa; border-color: #f8f9fa; }
+        .btn-light:hover { color: #000; background-color: #d3d4d5; border-color: #c6c7c8; }
+        .btn-outline-secondary { color: var(--text-muted); border-color: var(--input-border); }
+        .btn-outline-secondary:hover { color: #fff; background-color: var(--text-muted); border-color: var(--text-muted); }
+        .btn-outline-danger { color: var(--danger-color); border-color: var(--danger-color); }
+        .btn-outline-danger:hover { color: #fff; background-color: var(--danger-color); border-color: var(--danger-color); }
+        .btn-outline-success { color: var(--success-color); border-color: var(--success-color); }
+        .btn-outline-success:hover { color: #fff; background-color: var(--success-color); border-color: var(--success-color); }
+        .btn-outline-primary { color: var(--primary-color); border-color: var(--primary-color); }
+        .btn-outline-primary:hover { color: #fff; background-color: var(--primary-color); border-color: var(--primary-color); }
+        .btn-primary { color: #fff; background-color: var(--primary-color); border-color: var(--primary-color); }
+        .btn-primary:hover { color: #fff; background-color: var(--primary-hover); border-color: #0a58ca; }
+        /* Add style for download button if needed, e.g., info color */
+        .btn-outline-info { color: var(--info-color); border-color: var(--info-color); }
+        .btn-outline-info:hover { color: #000; background-color: var(--info-color); border-color: var(--info-color); }
+
+        .controls-top label { cursor: pointer; display: inline-flex; align-items: center; gap: 6px; font-size: 0.9rem; padding: 0.375rem 0.5rem; border-radius: var(--border-radius); transition: background-color 0.2s ease; vertical-align: middle; }
+        .controls-top label:hover { background-color: var(--hover-bg); }
+        .controls-top input[type="checkbox"] { cursor: pointer; width: 1em; height: 1em; margin-top: 0.1em; accent-color: var(--primary-color); border: 1px solid var(--input-border); border-radius: 0.25em; }
+
+        .translation-control { margin-bottom: calc(var(--spacing) * 1.5); padding-bottom: var(--spacing); border-bottom: 1px solid var(--card-border); display: flex; align-items: center; justify-content: center; gap: var(--spacing); flex-wrap: wrap; }
+        .translation-control label { font-weight: 500; white-space: nowrap; font-size: 0.9rem; }
+        .translation-control input[type="number"] { width: 80px; padding: 0.375rem 0.75rem; font-size: 0.9rem; text-align: center; color: var(--text-color); background-color: #fff; border: 1px solid var(--input-border); border-radius: var(--border-radius); transition: border-color .15s ease-in-out,box-shadow .15s ease-in-out; }
+        .translation-control input[type="number"]:focus { color: var(--text-color); background-color: #fff; border-color: var(--input-focus-border); outline: 0; box-shadow: 0 0 0 0.25rem var(--input-focus-shadow); }
+
+        .options-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: calc(var(--spacing) * 1.25) calc(var(--spacing) * 1.5); }
+        .control-group { border: none; padding: 0; margin: 0; display: flex; flex-direction: column; }
+        .control-group legend { font-weight: 600; margin-bottom: var(--spacing); font-size: 1rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--card-border); width: 100%; color: var(--text-color); }
+        .control-group label { display: flex; align-items: center; gap: 10px; margin-bottom: 5px; cursor: pointer; font-size: 0.9rem; padding: 0.5rem 0.75rem; border-radius: var(--border-radius); transition: background-color 0.15s ease-in-out, border-color 0.15s ease-in-out; border: 1px solid transparent; position: relative; }
+        .control-group label:hover:not(.selected) { background-color: var(--hover-bg); }
+        .control-group input[type="radio"] { appearance: none; -webkit-appearance: none; position: absolute; opacity: 0; width: 0; height: 0; }
+        .control-group label.selected { background-color: var(--selected-bg); border: 1px solid var(--selected-border); font-weight: 500; color: var(--primary-color); }
+        .control-group label.selected::before { content: '✔'; font-size: 0.8em; color: var(--primary-color); margin-right: 5px; line-height: 1; }
+        .color-swatch { display: inline-block; width: 1.3em; height: 1.3em; border: 1px solid rgba(0,0,0,0.15); margin-right: 8px; vertical-align: middle; flex-shrink: 0; border-radius: 4px; box-shadow: inset 0 0 0 1px rgba(0,0,0,0.05); }
+        .color-swatch[style*="white"], .color-swatch[style*="#ffffff"], .color-swatch[style*="#f"] { border: 1px solid #adb5bd; }
+
+        /* Info Modal */
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0, 0, 0, 0.5); padding-top: 60px; }
+        .modal-content { background-color: var(--card-bg); margin: 5% auto; padding: calc(var(--spacing) * 1.5); border: 1px solid var(--card-border); border-radius: var(--border-radius); width: 80%; max-width: 600px; box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.15); position: relative; }
+        .modal-close { color: var(--text-muted); position: absolute; top: 10px; right: 20px; font-size: 1.75rem; font-weight: bold; cursor: pointer; line-height: 1; }
+        .modal-close:hover, .modal-close:focus { color: var(--danger-color); text-decoration: none; }
+        .modal h2 { margin-top: 0; color: var(--primary-color); font-weight: 500; }
+        .modal p, .modal ul { font-size: 0.95em; line-height: 1.6; color: var(--text-color); }
+        .modal ul { padding-left: 20px; } .modal li { margin-bottom: 8px; }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            body { padding: var(--spacing); }
+            .options-grid { grid-template-columns: 1fr; }
+            .controls-top { justify-content: space-around; }
+            .modal-content { width: 90%; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="main-container">
+        <h1>Simetri Frieze</h1>
+        <div class="info-link">
+             (<button id="infoBtn">Klik di sini</button> untuk info dan instruksi.)
+        </div>
+
+        <div class="canvas-container">
+            <canvas id="drawingCanvas"></canvas>
+            <canvas id="gridCanvas"></canvas>
+        </div>
+
+        <div class="controls-card">
+            <div class="controls-top">
+                <button id="undoBtn" title="Urungkan (Ctrl+Z)" class="btn btn-outline-secondary" disabled>Urungkan</button>
+                <button id="redoBtn" title="Ulangi (Ctrl+Y)" class="btn btn-outline-secondary" disabled>Ulangi</button>
+                <button id="clearBtn" title="Bersihkan Kanvas" class="btn btn-outline-danger">Bersihkan</button>
+                <label>
+                    <input type="checkbox" id="showGridCheck" checked> Tampilkan Grid
+                </label>
+                <button id="saveBtn" title="Simpan data gambar sebagai JSON" class="btn btn-outline-success">Simpan JSON</button>
+                <button id="loadBtn" title="Muat data gambar dari JSON" class="btn btn-outline-secondary">Muat JSON</button>
+                <input type="file" id="loadFile" accept=".json" style="display: none;">
+                <button id="downloadImageBtn" title="Unduh gambar sebagai PNG" class="btn btn-outline-info">Unduh Gambar</button> <!-- Use info color -->
+            </div>
+
+            <div class="translation-control">
+                <label for="translationAmount">Translasi (px):</label>
+                <input type="number" id="translationAmount" value="200" min="20" step="10">
+                 <button id="applyTranslationBtn" class="btn btn-primary">Terapkan</button>
+            </div>
+
+            <div class="options-grid">
+                <!-- Grup Simetri -->
+                <fieldset class="control-group">
+                    <legend>Grup Simetri</legend>
+                    <label><input type="radio" name="symmetryGroup" value="p111"> <span>p111 (Translasi)</span></label>
+                    <label><input type="radio" name="symmetryGroup" value="pm11" checked> <span>pm11 (Refl. Horisontal)</span></label>
+                    <label><input type="radio" name="symmetryGroup" value="p1m1"> <span>p1m1 (Refl. Vertikal)</span></label>
+                    <label><input type="radio" name="symmetryGroup" value="pmm2"> <span>pmm2 (Refl. H + V)</span></label>
+                    <label><input type="radio" name="symmetryGroup" value="p112"> <span>p112 (Rotasi 180°)</span></label>
+                    <label><input type="radio" name="symmetryGroup" value="p1a1"> <span>p1a1 (Refl. Geser)</span></label>
+                    <label><input type="radio" name="symmetryGroup" value="pma2"> <span>pma2 (Refl. V + Geser)</span></label>
+                </fieldset>
+
+                <!-- Alat -->
+                <fieldset class="control-group">
+                    <legend>Alat Gambar</legend>
+                    <label><input type="radio" name="tool" value="line"> <span>Garis</span></label>
+                    <label><input type="radio" name="tool" value="rectangle"> <span>Persegi</span></label>
+                    <label><input type="radio" name="tool" value="oval" checked> <span>Oval</span></label>
+                    <label><input type="radio" name="tool" value="filledRect"> <span>Persegi Isi</span></label>
+                    <label><input type="radio" name="tool" value="filledOval"> <span>Oval Isi</span></label>
+                    <label><input type="radio" name="tool" value="freehand"> <span>Goresan</span></label>
+                </fieldset>
+
+                <!-- Lebar Garis -->
+                <fieldset class="control-group">
+                    <legend>Lebar Garis (px)</legend>
+                    <label><input type="radio" name="lineWidth" value="1"> <span>1</span></label>
+                    <label><input type="radio" name="lineWidth" value="2"> <span>2</span></label>
+                    <label><input type="radio" name="lineWidth" value="3" checked> <span>3</span></label>
+                    <label><input type="radio" name="lineWidth" value="4"> <span>4</span></label>
+                    <label><input type="radio" name="lineWidth" value="5"> <span>5</span></label>
+                    <label><input type="radio" name="lineWidth" value="10"> <span>10</span></label>
+                    <label><input type="radio" name="lineWidth" value="20"> <span>20</span></label>
+                </fieldset>
+
+                <!-- Kursor -->
+                <fieldset class="control-group">
+                    <legend>Gaya Kursor</legend>
+                    <label><input type="radio" name="cursorStyle" value="crosshair" checked> <span>Crosshair (+)</span></label>
+                    <label><input type="radio" name="cursorStyle" value="pencil"> <span>Pensil (Lokal)</span></label>
+                    <label><input type="radio" name="cursorStyle" value="default"> <span>Default (Panah)</span></label>
+                </fieldset>
+
+                <!-- Warna -->
+                <fieldset class="control-group">
+                    <legend>Warna</legend>
+                    <label><input type="radio" name="color" value="black"> <span class="color-swatch" style="background-color: black;"></span><span>Hitam</span></label>
+                    <label><input type="radio" name="color" value="#495057"> <span class="color-swatch" style="background-color: #495057;"></span><span>Abu Tua</span></label>
+                    <label><input type="radio" name="color" value="gray"> <span class="color-swatch" style="background-color: gray;"></span><span>Abu-abu</span></label>
+                    <label><input type="radio" name="color" value="#adb5bd"> <span class="color-swatch" style="background-color: #adb5bd;"></span><span>Abu Muda</span></label>
+                    <label><input type="radio" name="color" value="white"> <span class="color-swatch" style="background-color: white;"></span><span>Putih</span></label>
+                    <label><input type="radio" name="color" value="#dc3545"> <span class="color-swatch" style="background-color: #dc3545;"></span><span>Merah</span></label>
+                    <label><input type="radio" name="color" value="#fd7e14"> <span class="color-swatch" style="background-color: #fd7e14;"></span><span>Oranye</span></label>
+                    <label><input type="radio" name="color" value="#ffc107"> <span class="color-swatch" style="background-color: #ffc107;"></span><span>Kuning</span></label>
+                    <label><input type="radio" name="color" value="#d63384"> <span class="color-swatch" style="background-color: #d63384;"></span><span>Pink</span></label>
+                    <label><input type="radio" name="color" value="#6f42c1"> <span class="color-swatch" style="background-color: #6f42c1;"></span><span>Ungu</span></label>
+                    <label><input type="radio" name="color" value="#20c997"> <span class="color-swatch" style="background-color: #20c997;"></span><span>Teal</span></label>
+                    <label><input type="radio" name="color" value="#198754"> <span class="color-swatch" style="background-color: #198754;"></span><span>Hijau</span></label>
+                    <label><input type="radio" name="color" value="#0dcaf0"> <span class="color-swatch" style="background-color: #0dcaf0;"></span><span>Cyan</span></label>
+                    <label><input type="radio" name="color" value="blue" checked> <span class="color-swatch" style="background-color: blue;"></span><span>Biru</span></label>
+                    <label><input type="radio" name="color" value="#0d6efd"> <span class="color-swatch" style="background-color: #0d6efd;"></span><span>Biru Primer</span></label>
+                    <label><input type="radio" name="color" value="#6610f2"> <span class="color-swatch" style="background-color: #6610f2;"></span><span>Indigo</span></label>
+                    <label><input type="radio" name="color" value="brown"> <span class="color-swatch" style="background-color: brown;"></span><span>Coklat</span></label>
+                 </fieldset>
+            </div>
+        </div>
+    </div>
+
+    <!-- Info Modal Structure -->
+    <div id="infoModal" class="modal">
+        <div class="modal-content">
+            <span class="modal-close" id="modalCloseBtn">×</span>
+            <h2>Informasi & Instruksi Simetri Frieze</h2>
+            <p>Aplikasi ini memungkinkan Anda menggambar motif dasar dan melihatnya diulang membentuk pola frieze berdasarkan 7 grup simetri yang berbeda.</p>
+            <ul>
+                <li><strong>Pilih Grup Simetri:</strong> Pilih salah satu dari 7 grup (p111, pm11, dst.) untuk menentukan bagaimana motif Anda akan ditransformasikan (direfleksikan, diputar, digeser).</li>
+                <li><strong>Pilih Alat & Opsi:</strong> Pilih alat gambar, lebar garis, warna, dan gaya kursor yang diinginkan.</li>
+                <li><strong>Menggambar:</strong> Klik dan tahan tombol mouse pada area kanvas putih, lalu gerakkan mouse untuk menggambar. Pola frieze akan muncul secara dinamis. Gambar akan tetap mengikuti kursor meskipun keluar dari area kanvas selama tombol mouse masih ditekan.</li>
+                <li><strong>Translasi:</strong> Sesuaikan "Jumlah Translasi" (dalam piksel) untuk mengubah jarak pengulangan motif dasar. Klik "Terapkan" untuk melihat perubahan.</li>
+                <li><strong>Grid:</strong> Centang "Tampilkan Grid" untuk melihat garis bantu yang menunjukkan sumbu simetri, titik rotasi, dan batas translasi sesuai grup simetri yang dipilih.</li>
+                <li><strong>Kontrol Lain:</strong> Gunakan tombol "Urungkan", "Ulangi", "Bersihkan", "Simpan JSON" (menyimpan data gambar), "Muat JSON" (memuat data gambar), dan "Unduh Gambar" (menyimpan gambar visual sebagai PNG).</li>
+            </ul>
+            <p><strong>Tips:</strong> Cobalah menggambar bentuk asimetris kecil di dekat tengah atas area gambar untuk melihat efek simetri dengan jelas.</p>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // --- Elemen DOM ---
+            const canvas = document.getElementById('drawingCanvas');
+            const gridCanvas = document.getElementById('gridCanvas');
+            const canvasContainer = document.querySelector('.canvas-container');
+            const ctx = canvas.getContext('2d', { willReadFrequently: true });
+            const gridCtx = gridCanvas.getContext('2d');
+            const undoBtn = document.getElementById('undoBtn');
+            const redoBtn = document.getElementById('redoBtn');
+            const clearBtn = document.getElementById('clearBtn');
+            const showGridCheck = document.getElementById('showGridCheck');
+            const saveBtn = document.getElementById('saveBtn'); // JSON Save
+            const loadBtn = document.getElementById('loadBtn'); // JSON Load
+            const loadFile = document.getElementById('loadFile');
+            const downloadImageBtn = document.getElementById('downloadImageBtn'); // Image Download
+            const translationAmountInput = document.getElementById('translationAmount');
+            const applyTranslationBtn = document.getElementById('applyTranslationBtn');
+            const controlGroups = document.querySelectorAll('.control-group');
+            const infoBtn = document.getElementById('infoBtn');
+            const infoModal = document.getElementById('infoModal');
+            const modalCloseBtn = document.getElementById('modalCloseBtn');
+
+            // --- Variabel State ---
+            let isDrawing = false;
+            let currentTool = 'oval';
+            let currentColor = 'blue';
+            let currentLineWidth = 3;
+            let currentSymmetryGroup = 'pm11';
+            let currentCursorStyle = 'crosshair';
+            let translationAmount = parseInt(translationAmountInput.value, 10);
+            let startX, startY, currentMouseX, currentMouseY;
+            let history = [];
+            let historyIndex = -1;
+            let drawingActions = [];
+            let currentPath = [];
+            let lastKnownCanvasState = null;
+            let rafId = null;
+
+            // --- Setup ---
+            function resizeCanvas() {
+                const containerWidth = canvasContainer.clientWidth;
+                const containerHeight = canvasContainer.clientHeight;
+                canvas.width = containerWidth; canvas.height = containerHeight;
+                gridCanvas.width = containerWidth; gridCanvas.height = containerHeight;
+                applyContextSettings();
+                applyCursorStyle();
+                drawGrid();
+                redrawAllActions();
+            }
+
+            function applyContextSettings(targetCtx = ctx, settings = null) {
+                const lw = settings ? settings.lineWidth : currentLineWidth;
+                const col = settings ? settings.color : currentColor;
+                targetCtx.lineCap = 'round'; targetCtx.lineJoin = 'round';
+                targetCtx.lineWidth = lw; targetCtx.strokeStyle = col; targetCtx.fillStyle = col;
+            }
+
+            function applyCursorStyle() {
+                canvas.classList.remove('cursor-pencil', 'cursor-crosshair', 'cursor-default');
+                if (currentCursorStyle === 'pencil') canvas.classList.add('cursor-pencil');
+                else if (currentCursorStyle === 'crosshair') canvas.classList.add('cursor-crosshair');
+                else canvas.classList.add('cursor-default');
+            }
+
+            // --- Info Modal Logic ---
+            function showInfoModal() { infoModal.style.display = 'block'; }
+            function hideInfoModal() { infoModal.style.display = 'none'; }
+            infoBtn.addEventListener('click', showInfoModal);
+            modalCloseBtn.addEventListener('click', hideInfoModal);
+            window.addEventListener('click', (event) => { if (event.target == infoModal) hideInfoModal(); });
+            window.addEventListener('keydown', (event) => { if (event.key === 'Escape' && infoModal.style.display === 'block') hideInfoModal(); });
+
+            // --- Event Listeners ---
+            controlGroups.forEach(group => {
+                group.addEventListener('change', (e) => {
+                    if (e.target.type === 'radio') {
+                        const previousSymmetry = currentSymmetryGroup;
+                        const previousCursor = currentCursorStyle;
+                        updateSettings();
+                        updateSelectedLabels(group);
+                        if(currentCursorStyle !== previousCursor) applyCursorStyle();
+                        if (e.target.name === 'symmetryGroup' && currentSymmetryGroup !== previousSymmetry) {
+                            drawGrid(); redrawAllActions(true); saveState();
+                        } else if (e.target.name !== 'symmetryGroup') {
+                             applyContextSettings();
+                        }
+                    }
+                });
+            });
+
+            applyTranslationBtn.addEventListener('click', updateTranslationAmount);
+            translationAmountInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') updateTranslationAmount(); });
+            showGridCheck.addEventListener('change', toggleGrid);
+            clearBtn.addEventListener('click', () => clearCanvas(false));
+            undoBtn.addEventListener('click', undo);
+            redoBtn.addEventListener('click', redo);
+            saveBtn.addEventListener('click', saveJson); // JSON save
+            loadBtn.addEventListener('click', () => loadFile.click()); // JSON load trigger
+            loadFile.addEventListener('change', loadJson); // JSON load handler
+            downloadImageBtn.addEventListener('click', downloadCanvasImage); // Image download
+            document.addEventListener('keydown', (e) => { if (e.ctrlKey || e.metaKey) { if (e.key === 'z') { e.preventDefault(); undo(); } else if (e.key === 'y') { e.preventDefault(); redo(); } } });
+
+            // Drawing Listeners
+            canvas.addEventListener('mousedown', startDrawing);
+            canvas.addEventListener('touchstart', (e) => { if(e.touches.length === 1) { e.preventDefault(); startDrawing(e.touches[0]); }}, { passive: false });
+            // Move/End listeners are added/removed dynamically from window
+
+            // --- Fungsi Inti ---
+            function updateSettings() {
+                currentTool = document.querySelector('input[name="tool"]:checked')?.value ?? 'oval';
+                currentLineWidth = parseInt(document.querySelector('input[name="lineWidth"]:checked')?.value ?? '3', 10);
+                currentColor = document.querySelector('input[name="color"]:checked')?.value ?? 'blue';
+                currentSymmetryGroup = document.querySelector('input[name="symmetryGroup"]:checked')?.value ?? 'pm11';
+                currentCursorStyle = document.querySelector('input[name="cursorStyle"]:checked')?.value ?? 'crosshair';
+            }
+
+            function updateSelectedLabels(targetGroup = null) {
+                const groupsToUpdate = targetGroup ? [targetGroup] : controlGroups;
+                groupsToUpdate.forEach(group => {
+                    group.querySelectorAll('label').forEach(label => {
+                         const radio = label.querySelector('input[type="radio"]');
+                         if (radio && radio.checked) label.classList.add('selected');
+                         else label.classList.remove('selected');
+                    });
+                });
+            }
+
+            function updateTranslationAmount() {
+                const newAmount = parseInt(translationAmountInput.value, 10);
+                if (!isNaN(newAmount) && newAmount >= 10) {
+                     if (translationAmount !== newAmount) {
+                        translationAmount = newAmount; drawGrid(); redrawAllActions(true); saveState();
+                     }
+                } else {
+                    alert("Translasi harus angka >= 10."); translationAmountInput.value = translationAmount;
+                }
+            }
+
+            // --- Manajemen Riwayat ---
+            function saveState() {
+                if (historyIndex < history.length - 1) { history = history.slice(0, historyIndex + 1); drawingActions = drawingActions.slice(0, historyIndex + 1); }
+                const maxHistory = 30; if (history.length >= maxHistory) { history.shift(); drawingActions.shift(); } else { historyIndex = history.length; }
+                try {
+                    const dataUrl = canvas.toDataURL(); if (history.length === 0 || history[history.length - 1] !== dataUrl) {
+                        history.push(dataUrl); historyIndex = history.length - 1; const img = new Image(); img.onload = () => { lastKnownCanvasState = img; }; img.onerror = () => { lastKnownCanvasState = null; }; img.src = dataUrl;
+                    } else { historyIndex = history.length - 1; }
+                } catch (e) { console.error("saveState error:", e); } updateUndoRedoButtons();
+            }
+            function restoreState(targetIndex) {
+                 if (targetIndex < -1 || targetIndex >= history.length) return; historyIndex = targetIndex;
+                 if (targetIndex === -1) { ctx.clearRect(0, 0, canvas.width, canvas.height); lastKnownCanvasState = null; } else {
+                     const dataUrl = history[targetIndex]; const img = new Image(); img.onload = () => { ctx.clearRect(0, 0, canvas.width, canvas.height); ctx.drawImage(img, 0, 0); applyContextSettings(); lastKnownCanvasState = img; }; img.onerror = () => { console.error("restoreState error:", targetIndex); }; img.src = dataUrl;
+                 } updateUndoRedoButtons();
+            }
+            function undo() { if (historyIndex >= 0) restoreState(historyIndex - 1); }
+            function redo() { if (historyIndex < history.length - 1) restoreState(historyIndex + 1); }
+            function updateUndoRedoButtons() { undoBtn.disabled = historyIndex < 0; redoBtn.disabled = historyIndex >= history.length - 1; }
+            function clearCanvas(isInternal = false) {
+                ctx.clearRect(0, 0, canvas.width, canvas.height); gridCtx.clearRect(0, 0, gridCanvas.width, gridCanvas.height);
+                if (!isInternal) { drawingActions = []; history = []; historyIndex = -1; lastKnownCanvasState = null; drawGrid(); saveState(); updateUndoRedoButtons(); }
+            }
+
+            // --- Logika Menggambar ---
+            function getMousePos(evt) { const rect = canvas.getBoundingClientRect(); const clientX = evt.clientX ?? evt.touches?.[0]?.clientX ?? 0; const clientY = evt.clientY ?? evt.touches?.[0]?.clientY ?? 0; return { x: clientX - rect.left, y: clientY - rect.top }; }
+            function startDrawing(e) {
+                 if (e.button && e.button !== 0) return; isDrawing = true; const pos = getMousePos(e); startX = pos.x; startY = pos.y; currentMouseX = startX; currentMouseY = startY; applyContextSettings(); if (currentTool === 'freehand') currentPath = [{ x: startX, y: startY }];
+                 window.addEventListener('mousemove', handleDrawingMove); window.addEventListener('mouseup', stopDrawing); window.addEventListener('touchmove', handleDrawingMove, { passive: false }); window.addEventListener('touchend', stopDrawing); window.addEventListener('touchcancel', stopDrawing);
+                 if (rafId) cancelAnimationFrame(rafId); rafId = requestAnimationFrame(drawingLoop);
+            }
+            function handleDrawingMove(e) {
+                 if (!isDrawing) return; if (e.type === 'touchmove') e.preventDefault(); const pos = getMousePos(e); currentMouseX = pos.x; currentMouseY = pos.y;
+                 if (currentTool === 'freehand') { const lastPoint = currentPath[currentPath.length - 1]; const dx = currentMouseX - lastPoint.x; const dy = currentMouseY - lastPoint.y; if (dx * dx + dy * dy > 4) currentPath.push({ x: currentMouseX, y: currentMouseY }); }
+            }
+            function drawingLoop() {
+                 if (!isDrawing) { rafId = null; return; } ctx.clearRect(0, 0, canvas.width, canvas.height); if (lastKnownCanvasState) { try { ctx.drawImage(lastKnownCanvasState, 0, 0); } catch (error) { lastKnownCanvasState = null; } } applyContextSettings();
+                 if (currentTool === 'freehand') { if (currentPath.length > 0) { const tPaths = applySymmetryToPath(currentPath, currentSymmetryGroup); tPaths.forEach(p => drawFreehandPath(p, ctx)); } }
+                 else { if (startX !== currentMouseX || startY !== currentMouseY || currentTool === 'line') { const pts = applySymmetry(startX, startY, currentMouseX, currentMouseY, currentSymmetryGroup); pts.forEach(p => drawPrimitive(p.x1, p.y1, p.x2, p.y2, currentTool, ctx)); } else if (startX === currentMouseX && startY === currentMouseY && (currentTool === 'filledRect' || currentTool === 'filledOval')) { const pts = applySymmetry(startX, startY, currentMouseX, currentMouseY, currentSymmetryGroup); pts.forEach(p => drawDot(p.x1, p.y1, ctx)); } }
+                 rafId = requestAnimationFrame(drawingLoop);
+            }
+            function stopDrawing(e) {
+                 if (!isDrawing) return; isDrawing = false; window.removeEventListener('mousemove', handleDrawingMove); window.removeEventListener('mouseup', stopDrawing); window.removeEventListener('touchmove', handleDrawingMove); window.removeEventListener('touchend', stopDrawing); window.removeEventListener('touchcancel', stopDrawing);
+                 if (rafId) cancelAnimationFrame(rafId); rafId = null; const endX = currentMouseX; const endY = currentMouseY;
+                 if (currentTool === 'freehand') { if (currentPath.length > 0) { const last = currentPath[currentPath.length - 1]; if (last.x !== endX || last.y !== endY) currentPath.push({ x: endX, y: endY }); } }
+                 let addAction = false; if (currentTool === 'freehand') addAction = currentPath.length > 1; else if (currentTool === 'line') addAction = startX !== endX || startY !== endY; else addAction = true;
+                 if (addAction) { const action = { tool: currentTool, color: currentColor, lineWidth: currentLineWidth, symmetry: currentSymmetryGroup, startX: startX, startY: startY, endX: endX, endY: endY, path: currentTool === 'freehand' ? [...currentPath] : null }; if (historyIndex < history.length - 1) { history = history.slice(0, historyIndex + 1); drawingActions = drawingActions.slice(0, historyIndex + 1); } drawingActions.push(action); saveState(); }
+                 else { ctx.clearRect(0, 0, canvas.width, canvas.height); if (lastKnownCanvasState) ctx.drawImage(lastKnownCanvasState, 0, 0); } currentPath = [];
+            }
+
+            // --- Redraw All Actions ---
+            function redrawAllActions(dynamicRedraw = false) {
+                ctx.clearRect(0, 0, canvas.width, canvas.height); const orig = { lineWidth: currentLineWidth, color: currentColor };
+                drawingActions.forEach((action) => { applyContextSettings(ctx, action); const sym = dynamicRedraw ? currentSymmetryGroup : action.symmetry; if (action.tool === 'freehand') { if (action.path && action.path.length > 0) { const tPaths = applySymmetryToPath(action.path, sym); tPaths.forEach(p => drawFreehandPath(p, ctx)); } } else { const pts = applySymmetry(action.startX, action.startY, action.endX, action.endY, sym); pts.forEach(p => { if (action.tool !== 'line' && action.startX === action.endX && action.startY === action.endY) drawDot(p.x1, p.y1, ctx); else drawPrimitive(p.x1, p.y1, p.x2, p.y2, action.tool, ctx); }); } });
+                applyContextSettings(ctx, orig); if (!isDrawing) { try { const url = canvas.toDataURL(); const img = new Image(); img.onload = () => { lastKnownCanvasState = img; }; img.onerror = () => { lastKnownCanvasState = null; }; img.src = url; } catch (e) { lastKnownCanvasState = null; } }
+            }
+
+            // --- Transformasi Simetri ---
+            function applySymmetry(x1, y1, x2, y2, symmetryGroupToUse) { const T = translationAmount; const canvasWidth = canvas.width; const canvasHeight = canvas.height; const midY = canvasHeight / 2; const points = []; const margin = Math.max(5, currentLineWidth * 2); const minX = Math.min(x1, x2) - margin; const maxX = Math.max(x1, x2) + margin; const minN = Math.floor(-maxX / T) - 1; const maxN = Math.ceil((canvasWidth - minX) / T) + 1; for (let n = minN; n <= maxN; n++) { const offsetX = n * T; const t_t = (p) => ({ x1: p.x1 + offsetX, y1: p.y1, x2: p.x2 + offsetX, y2: p.y2 }); const rAx = offsetX + T / 2; const t_vr = (p) => ({ x1: 2 * rAx - p.x1, y1: p.y1, x2: 2 * rAx - p.x2, y2: p.y2 }); const t_hr = (p) => ({ x1: p.x1, y1: 2 * midY - p.y1, x2: p.x2, y2: 2 * midY - p.y2 }); const rCx = offsetX + T / 2; const rCy = midY; const t_rot = (p) => ({ x1: 2 * rCx - p.x1, y1: 2 * rCy - p.y1, x2: 2 * rCx - p.x2, y2: 2 * rCy - p.y2 }); const t_g = (p) => ({ x1: p.x1 + T / 2, y1: 2 * midY - p.y1, x2: p.x2 + T / 2, y2: 2 * midY - p.y2 }); const b = { x1, y1, x2, y2 }; const tr = t_t(b); points.push(tr); switch (symmetryGroupToUse) { case 'p111': break; case 'pm11': points.push(t_hr(tr)); break; case 'p1m1': points.push(t_vr(tr)); break; case 'p112': points.push(t_rot(tr)); break; case 'pmm2': points.push(t_hr(tr)); points.push(t_vr(tr)); points.push(t_rot(tr)); break; case 'p1a1': points.push(t_g(tr)); break; case 'pma2': points.push(t_vr(tr)); const g_pma2 = t_g(tr); points.push(g_pma2); points.push(t_vr(g_pma2)); break; } } return points; }
+            function applySymmetryToPath(path, symmetryGroupToUse) { if (!path || path.length === 0) return []; const T = translationAmount; const cW = canvas.width; const cH = canvas.height; const mY = cH / 2; const tPaths = []; let minX = path[0].x, maxX = path[0].x; path.forEach(p => { minX = Math.min(minX, p.x); maxX = Math.max(maxX, p.x); }); const mg = Math.max(5, currentLineWidth * 2); minX -= mg; maxX += mg; const minN = Math.floor(-maxX / T) - 1; const maxN = Math.ceil((cW - minX) / T) + 1; for (let n = minN; n <= maxN; n++) { const oX = n * T; const tp_t = (p) => ({ x: p.x + oX, y: p.y }); const rAx = oX + T / 2; const tp_vr = (p) => ({ x: 2 * rAx - p.x, y: p.y }); const tp_hr = (p) => ({ x: p.x, y: 2 * mY - p.y }); const rCx = oX + T / 2; const rCy = mY; const tp_rot = (p) => ({ x: 2 * rCx - p.x, y: 2 * rCy - p.y }); const tp_g = (p) => ({ x: p.x + T / 2, y: 2 * mY - p.y }); const appTrans = (op, pt) => op.map(pt); const trPath = appTrans(path, tp_t); tPaths.push(trPath); switch (symmetryGroupToUse) { case 'p111': break; case 'pm11': tPaths.push(appTrans(trPath, tp_hr)); break; case 'p1m1': tPaths.push(appTrans(trPath, tp_vr)); break; case 'p112': tPaths.push(appTrans(trPath, tp_rot)); break; case 'pmm2': tPaths.push(appTrans(trPath, tp_hr)); tPaths.push(appTrans(trPath, tp_vr)); tPaths.push(appTrans(trPath, tp_rot)); break; case 'p1a1': tPaths.push(appTrans(trPath, tp_g)); break; case 'pma2': tPaths.push(appTrans(trPath, tp_vr)); const gPath = appTrans(trPath, tp_g); tPaths.push(gPath); tPaths.push(appTrans(gPath, tp_vr)); break; } } return tPaths; }
+
+            // --- Menggambar Primitif ---
+            function drawPrimitive(x1, y1, x2, y2, tool, targetCtx) { targetCtx.beginPath(); const w = x2 - x1; const h = y2 - y1; switch (tool) { case 'line': targetCtx.moveTo(x1, y1); targetCtx.lineTo(x2, y2); targetCtx.stroke(); break; case 'rectangle': case 'filledRect': targetCtx.rect(x1, y1, w, h); if (tool === 'filledRect') targetCtx.fill(); else targetCtx.stroke(); break; case 'oval': case 'filledOval': const rX = Math.abs(w / 2); const rY = Math.abs(h / 2); const cX = x1 + w / 2; const cY = y1 + h / 2; targetCtx.ellipse(cX, cY, rX, rY, 0, 0, 2 * Math.PI); if (tool === 'filledOval') targetCtx.fill(); else targetCtx.stroke(); break; } }
+            function drawFreehandPath(path, targetCtx) { if (!path || path.length === 0) return; targetCtx.beginPath(); targetCtx.moveTo(path[0].x, path[0].y); if (path.length === 1) drawDot(path[0].x, path[0].y, targetCtx); else { for (let i = 1; i < path.length; i++) targetCtx.lineTo(path[i].x, path[i].y); targetCtx.stroke(); } }
+            function drawDot(x, y, targetCtx) { const r = Math.max(1, targetCtx.lineWidth / 2); targetCtx.fillStyle = targetCtx.strokeStyle; targetCtx.beginPath(); targetCtx.ellipse(x, y, r, r, 0, 0, 2 * Math.PI); targetCtx.fill(); }
+
+            // --- Grid Dinamis ---
+            function toggleGrid() { gridCanvas.style.display = showGridCheck.checked ? 'block' : 'none'; if (showGridCheck.checked) drawGrid(); else gridCtx.clearRect(0, 0, gridCanvas.width, gridCanvas.height); }
+            function drawGrid() { if (!showGridCheck.checked) { gridCtx.clearRect(0, 0, gridCanvas.width, gridCanvas.height); return; } gridCtx.clearRect(0, 0, gridCanvas.width, gridCanvas.height); const T = translationAmount; const mY = gridCanvas.height / 2; const w = gridCanvas.width; const h = gridCanvas.height; const rotR = 4; gridCtx.save(); gridCtx.lineWidth = 1; const st = getComputedStyle(document.documentElement); const gC = st.getPropertyValue('--grid-color').trim() || '#B0BEC5'; const gMC = st.getPropertyValue('--grid-mid-color').trim() || '#90A4AE'; const gRC = st.getPropertyValue('--grid-reflect-color').trim() || '#F1948A'; const gGC = st.getPropertyValue('--grid-glide-color').trim() || '#76D7C4'; const gRotC = st.getPropertyValue('--grid-rot-color').trim() || '#AF7AC5'; gridCtx.strokeStyle = gC; gridCtx.setLineDash([4, 4]); const minN = Math.floor(-w / T) - 1; const maxN = Math.ceil(w / T) + 1; for (let n = minN; n <= maxN; n++) { const x = n * T; gridCtx.beginPath(); gridCtx.moveTo(x, 0); gridCtx.lineTo(x, h); gridCtx.stroke(); } gridCtx.setLineDash([]); switch (currentSymmetryGroup) { case 'pm11': case 'pmm2': gridCtx.strokeStyle = gMC; gridCtx.beginPath(); gridCtx.moveTo(0, mY); gridCtx.lineTo(w, mY); gridCtx.stroke(); break; case 'p1a1': case 'pma2': gridCtx.strokeStyle = gGC; gridCtx.setLineDash([8, 4]); gridCtx.beginPath(); gridCtx.moveTo(0, mY); gridCtx.lineTo(w, mY); gridCtx.stroke(); break; default: gridCtx.strokeStyle = gMC; gridCtx.setLineDash([2, 3]); gridCtx.beginPath(); gridCtx.moveTo(0, mY); gridCtx.lineTo(w, mY); gridCtx.stroke(); break; } gridCtx.setLineDash([]); for (let n = minN; n <= maxN; n++) { const cX = n * T + T / 2; if (currentSymmetryGroup === 'p1m1' || currentSymmetryGroup === 'pmm2' || currentSymmetryGroup === 'pma2') { gridCtx.strokeStyle = gRC; gridCtx.lineWidth = 1.2; gridCtx.beginPath(); gridCtx.moveTo(cX, 0); gridCtx.lineTo(cX, h); gridCtx.stroke(); } if (currentSymmetryGroup === 'p112' || currentSymmetryGroup === 'pmm2' || currentSymmetryGroup === 'pma2') { gridCtx.fillStyle = gRotC; gridCtx.beginPath(); gridCtx.ellipse(cX, mY, rotR, rotR, 0, 0, 2 * Math.PI); gridCtx.fill(); } } gridCtx.restore(); }
+
+            // --- Simpan / Muat JSON ---
+            function saveJson() { if (drawingActions.length === 0) { alert("Tidak ada data untuk disimpan."); return; } const data = { version: 1.6, translationAmount: translationAmount, actions: drawingActions }; const str = JSON.stringify(data, null, 2); const blob = new Blob([str], { type: 'application/json' }); const url = URL.createObjectURL(blob); const a = document.createElement('a'); const t = new Date().toISOString().replace(/[:.]/g, '-'); a.download = `frieze_drawing_${currentSymmetryGroup}_T${translationAmount}_${t}.json`; a.href = url; document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url); }
+            function loadJson(event) { const f = event.target.files[0]; if (!f || !f.type.match('application/json')) { alert("Pilih file JSON."); loadFile.value = null; return; } const r = new FileReader(); r.onload = (e) => { try { const d = JSON.parse(e.target.result); if (!d || typeof d.translationAmount !== 'number' || !Array.isArray(d.actions)) throw new Error("Format JSON tidak valid."); clearCanvas(true); translationAmountInput.value = d.translationAmount; translationAmount = d.translationAmount; drawingActions = d.actions; if (drawingActions.length > 0) { const sym = drawingActions[drawingActions.length - 1].symmetry; const rS = document.querySelector(`input[name="symmetryGroup"][value="${sym}"]`); if (rS) rS.checked = true; else document.querySelector('input[name="symmetryGroup"][value="pm11"]').checked = true; } else document.querySelector('input[name="symmetryGroup"][value="pm11"]').checked = true; updateSettings(); updateSelectedLabels(); applyCursorStyle(); drawGrid(); redrawAllActions(false); history = []; historyIndex = -1; lastKnownCanvasState = null; saveState(); alert(`Gambar "${f.name}" dimuat.`); } catch (err) { console.error("Load JSON error:", err); alert("Gagal memuat: " + err.message); } finally { loadFile.value = null; } }; r.onerror = () => { alert("Tidak bisa membaca file."); loadFile.value = null; }; r.readAsText(f); }
+
+            // --- Unduh Gambar ---
+            function downloadCanvasImage() {
+                const canvasToDownload = canvas; // Hanya gambar, tanpa grid
+                // Opsi untuk menyertakan grid (jika aktif):
+                /*
+                let canvasToDownload = canvas;
+                if (showGridCheck.checked) {
+                    const tempCanvas = document.createElement('canvas');
+                    tempCanvas.width = canvas.width; tempCanvas.height = canvas.height;
+                    const tempCtx = tempCanvas.getContext('2d');
+                    tempCtx.drawImage(gridCanvas, 0, 0); // Grid dulu
+                    tempCtx.drawImage(canvas, 0, 0);     // Gambar di atasnya
+                    canvasToDownload = tempCanvas;
+                }
+                */
+                const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+                const filename = `frieze_pattern_${currentSymmetryGroup}_T${translationAmount}_${timestamp}.png`;
+                const link = document.createElement('a'); link.download = filename;
+                try {
+                    link.href = canvasToDownload.toDataURL('image/png');
+                    document.body.appendChild(link); link.click(); document.body.removeChild(link);
+                } catch (e) { console.error("Download image error:", e); alert("Gagal membuat gambar unduhan."); }
+            }
+
+            // --- Panggilan Setup Awal ---
+            updateSettings(); updateSelectedLabels(); applyCursorStyle(); resizeCanvas(); toggleGrid(); updateUndoRedoButtons(); saveState();
+            console.log("Frieze Drawer (v1.6 - Image Download) Initialized.");
+        }); // End DOMContentLoaded
+    </script>
+
+</body>
+</html>
