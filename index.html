@@ -154,7 +154,7 @@
         #drawingCanvas, #gridCanvas { display: block; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-color: transparent; }
         #drawingCanvas { position: relative; z-index: 0; background-color: white; }
         /* Cursor Classes */
-        .cursor-pencil { cursor: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAAXNSR0IArs4c6QAAAJ5JREFUOE9jZKASYKSCaxjwv7f0Y2SgKnDqAjsFVQGr4M4L/P9/ZGBgYAZiP6DmkSA1DrBqAQYYGM7/X8y/gYGBgRFFgB0H6sH//0AnAwMDQwIk58/A////MwYGBlYoYP4zMDAwMhACY5EYQ5QBZP7//zMwMDAygALmBDAwMDByMIIAAgyQ0j8wMDAwMsA6sA9A7gAxnwwMAAEEALBwG0+0i3uFAAAAAElFTkSuQmCC') 0 16, crosshair; } /* Embedded pencil */
+        .cursor-pencil { cursor: url('pencil.png') 6 24, crosshair; } /* Embedded pencil */
         .cursor-crosshair { cursor: crosshair; }
         .cursor-default { cursor: default; }
 
@@ -422,7 +422,7 @@
             let lastKnownCanvasState = null;
             let rafId = null;
             let colorPicker = null; // To hold the iro.js instance
-            const pencilCursorDataUrl = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAAXNSR0IArs4c6QAAAJ5JREFUOE9jZKASYKSCaxjwv7f0Y2SgKnDqAjsFVQGr4M4L/P9/ZGBgYAZiP6DmkSA1DrBqAQYYGM7/X8y/gYGBgRFFgB0H6sH//0AnAwMDQwIk58/A////MwYGBlYoYP4zMDAwMhACY5EYQ5QBZP7//zMwMDAygALmBDAwMDByMIIAAgyQ0j8wMDAwMsA6sA9A7gAxnwwMAAEEALBwG0+0i3uFAAAAAElFTkSuQmCC'; // Embedded pencil cursor
+            const pencilCursorDataUrl = 'pencil.png'; // Embedded pencil cursor
 
 
             // --- Setup ---
@@ -454,7 +454,7 @@
                  canvas.classList.remove('cursor-pencil', 'cursor-crosshair', 'cursor-default');
                  canvas.style.cursor = ''; // Reset inline cursor style
                  if (currentCursorStyle === 'pencil') {
-                     canvas.style.cursor = `url('${pencilCursorDataUrl}') 0 16, crosshair`;
+                     canvas.style.cursor = `url('${pencilCursorDataUrl}') 6 24, crosshair`;
                      canvas.classList.add('cursor-pencil');
                  } else if (currentCursorStyle === 'crosshair') {
                      canvas.classList.add('cursor-crosshair');
