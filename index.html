@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Simetri Frieze (v1.8 - Spectrum Color Picker)</title>
+    <title>Simetri Frieze (v1.9 - Modifikasi Dimensi & pm11)</title>
     <!-- Include iro.js Color Picker Library -->
     <script src="https://cdn.jsdelivr.net/npm/@jaames/iro@5"></script>
 
@@ -47,15 +47,17 @@
 
             /* Grid Colors (Light) */
             --grid-color: #b0bec5;
-            --grid-mid-color: #90a4ae;
-            --grid-reflect-color: #f1948a;
+            --grid-mid-color: #90a4ae; /* Horizontal Reflection Axis */
+            --grid-reflect-color: #f1948a; /* Vertical Reflection Axis */
             --grid-glide-color: #76d7c4;
             --grid-rot-color: #af7ac5;
 
             /* Base Variables */
-            --canvas-width: 1264px;
-            --canvas-height: 140px;
-            --controls-max-width: 1264px;
+            /* --- MODIFIED DIMENSIONS --- */
+            --canvas-width: 1706px;
+            --canvas-height: 128px;
+            --controls-max-width: 1706px;
+            /* --- END MODIFIED DIMENSIONS --- */
             --border-radius: 0.375rem; /* Bootstrap's default */
             --spacing: 1rem;
             --transition-speed: 0.15s;
@@ -100,8 +102,8 @@
 
             /* Grid Colors (Dark) */
             --grid-color: #555;
-            --grid-mid-color: #777;
-            --grid-reflect-color: #b95f56; /* Adjusted dark */
+            --grid-mid-color: #777; /* Horizontal Reflection Axis */
+            --grid-reflect-color: #b95f56; /* Vertical Reflection Axis */
             --grid-glide-color: #5aa091; /* Adjusted dark */
             --grid-rot-color: #8b609d; /* Adjusted dark */
         }
@@ -145,7 +147,7 @@
 
         .canvas-container {
             position: relative; border: 1px solid var(--canvas-border); background-color: white; /* Canvas bg always white */
-            width: 100%; max-width: var(--canvas-width); height: var(--canvas-height);
+            width: 100%; max-width: var(--canvas-width); height: var(--canvas-height); /* Use CSS variables */
             box-shadow: 0 0.25rem 0.5rem var(--shadow-color); /* Softer shadow */
             overflow: hidden; margin-left: auto; margin-right: auto; border-radius: var(--border-radius);
             transition: border-color var(--transition-speed);
@@ -312,8 +314,10 @@
                 <fieldset class="control-group">
                     <legend>Grup Simetri</legend>
                     <label><input type="radio" name="symmetryGroup" value="p111"> <span>p111 (Translasi)</span></label>
-                    <label><input type="radio" name="symmetryGroup" value="pm11" checked> <span>pm11 (Refl. Horisontal)</span></label>
-                    <label><input type="radio" name="symmetryGroup" value="p1m1"> <span>p1m1 (Refl. Vertikal)</span></label>
+                    <!-- --- MODIFIED LABELS for pm11 and p1m1 --- -->
+                    <label><input type="radio" name="symmetryGroup" value="pm11" checked> <span>pm11 (Refl. Vertikal)</span></label>
+                    <label><input type="radio" name="symmetryGroup" value="p1m1"> <span>p1m1 (Refl. Horisontal)</span></label>
+                    <!-- --- END MODIFIED LABELS --- -->
                     <label><input type="radio" name="symmetryGroup" value="pmm2"> <span>pmm2 (Refl. H + V)</span></label>
                     <label><input type="radio" name="symmetryGroup" value="p112"> <span>p112 (Rotasi 180°)</span></label>
                     <label><input type="radio" name="symmetryGroup" value="p1a1"> <span>p1a1 (Refl. Geser)</span></label>
@@ -411,7 +415,7 @@
             let currentTool = 'oval';
             let currentColor = '#0000ff'; // Default blue in hex
             let currentLineWidth = 3;
-            let currentSymmetryGroup = 'pm11';
+            let currentSymmetryGroup = 'pm11'; // Default is now vertical reflection
             let currentCursorStyle = 'crosshair';
             let translationAmount = parseInt(translationAmountInput.value, 10);
             let startX, startY, currentMouseX, currentMouseY;
@@ -427,10 +431,21 @@
 
             // --- Setup ---
             function resizeCanvas() {
-                const containerWidth = canvasContainer.clientWidth;
-                const containerHeight = canvasContainer.clientHeight;
-                canvas.width = containerWidth; canvas.height = containerHeight;
-                gridCanvas.width = containerWidth; gridCanvas.height = containerHeight;
+                // Read dimensions directly from CSS variables for consistency
+                const style = getComputedStyle(document.documentElement);
+                const targetWidth = parseInt(style.getPropertyValue('--canvas-width'), 10);
+                const targetHeight = parseInt(style.getPropertyValue('--canvas-height'), 10);
+
+                // Set container size (might not be strictly necessary if max-width is set)
+                canvasContainer.style.width = `${targetWidth}px`;
+                canvasContainer.style.height = `${targetHeight}px`;
+
+                // Set canvas resolution
+                canvas.width = targetWidth;
+                canvas.height = targetHeight;
+                gridCanvas.width = targetWidth;
+                gridCanvas.height = targetHeight;
+
                 // Resize color picker if needed (iro.js often handles this internally based on container)
                 if (colorPicker) {
                      // You might not need to call resize explicitly if width is 100%
@@ -586,7 +601,7 @@
                 currentTool = document.querySelector('input[name="tool"]:checked')?.value ?? 'oval';
                 currentLineWidth = parseInt(document.querySelector('input[name="lineWidth"]:checked')?.value ?? '3', 10);
                 // currentColor is updated by the picker's event handler
-                currentSymmetryGroup = document.querySelector('input[name="symmetryGroup"]:checked')?.value ?? 'pm11';
+                currentSymmetryGroup = document.querySelector('input[name="symmetryGroup"]:checked')?.value ?? 'pm11'; // Default is pm11 (vertical reflection now)
                 currentCursorStyle = document.querySelector('input[name="cursorStyle"]:checked')?.value ?? 'crosshair';
             }
 
@@ -742,18 +757,18 @@
                 }
             }
 
-            // --- Transformasi Simetri (Same as before) ---
-            function applySymmetry(x1, y1, x2, y2, symmetryGroupToUse) { const T = translationAmount; const canvasWidth = canvas.width; const canvasHeight = canvas.height; const midY = canvasHeight / 2; const points = []; const margin = Math.max(5, currentLineWidth * 2); const minXDraw = Math.min(x1, x2) - margin; const maxXDraw = Math.max(x1, x2) + margin; const minYDraw = Math.min(y1, y2) - margin; const maxYDraw = Math.max(y1, y2) + margin; const minN = Math.floor(-maxXDraw / T) - 2; const maxN = Math.ceil((canvasWidth - minXDraw) / T) + 2; for (let n = minN; n <= maxN; n++) { const offsetX = n * T; const t_t = (p) => ({ x1: p.x1 + offsetX, y1: p.y1, x2: p.x2 + offsetX, y2: p.y2 }); const rAx = offsetX + T / 2; const t_vr = (p) => ({ x1: 2 * rAx - p.x1, y1: p.y1, x2: 2 * rAx - p.x2, y2: p.y2 }); const t_hr = (p) => ({ x1: p.x1, y1: 2 * midY - p.y1, x2: p.x2, y2: 2 * midY - p.y2 }); const rCx = offsetX + T / 2; const rCy = midY; const t_rot = (p) => ({ x1: 2 * rCx - p.x1, y1: 2 * rCy - p.y1, x2: 2 * rCx - p.x2, y2: 2 * rCy - p.y2 }); const t_g = (p) => ({ x1: p.x1 + T / 2, y1: 2 * midY - p.y1, x2: p.x2 + T / 2, y2: 2 * midY - p.y2 }); const b = { x1, y1, x2, y2 }; const tr = t_t(b); const candidates = [tr]; switch (symmetryGroupToUse) { case 'p111': break; case 'pm11': candidates.push(t_hr(tr)); break; case 'p1m1': candidates.push(t_vr(tr)); break; case 'p112': candidates.push(t_rot(tr)); break; case 'pmm2': candidates.push(t_hr(tr)); candidates.push(t_vr(tr)); candidates.push(t_rot(tr)); break; case 'p1a1': candidates.push(t_g(tr)); break; case 'pma2': const vr_pma2 = t_vr(tr); candidates.push(vr_pma2); const g_pma2 = t_g(tr); candidates.push(g_pma2); candidates.push(t_vr(g_pma2)); break; } candidates.forEach(p => { const pMinX = Math.min(p.x1, p.x2); const pMaxX = Math.max(p.x1, p.x2); const pMinY = Math.min(p.y1, p.y2); const pMaxY = Math.max(p.y1, p.y2); if (pMaxX >= -margin && pMinX <= canvasWidth + margin && pMaxY >= -margin && pMinY <= canvasHeight + margin) { points.push(p); } }); } return points; }
-            function applySymmetryToPath(path, symmetryGroupToUse) { if (!path || path.length === 0) return []; const T = translationAmount; const cW = canvas.width; const cH = canvas.height; const mY = cH / 2; const tPaths = []; const mg = Math.max(5, currentLineWidth * 2); let minX = path[0].x, maxX = path[0].x, minY = path[0].y, maxY = path[0].y; path.forEach(p => { minX = Math.min(minX, p.x); maxX = Math.max(maxX, p.x); minY = Math.min(minY, p.y); maxY = Math.max(maxY, p.y); }); minX -= mg; maxX += mg; minY -= mg; maxY += mg; const minN = Math.floor(-maxX / T) - 2; const maxN = Math.ceil((cW - minX) / T) + 2; for (let n = minN; n <= maxN; n++) { const oX = n * T; const tp_t = (p) => ({ x: p.x + oX, y: p.y }); const rAx = oX + T / 2; const tp_vr = (p) => ({ x: 2 * rAx - p.x, y: p.y }); const tp_hr = (p) => ({ x: p.x, y: 2 * mY - p.y }); const rCx = oX + T / 2; const rCy = mY; const tp_rot = (p) => ({ x: 2 * rCx - p.x, y: 2 * rCy - p.y }); const tp_g = (p) => ({ x: p.x + T / 2, y: 2 * mY - p.y }); const appTrans = (op, pt) => op.map(pt); const trPath = appTrans(path, tp_t); const candidatePaths = [trPath]; switch (symmetryGroupToUse) { case 'p111': break; case 'pm11': candidatePaths.push(appTrans(trPath, tp_hr)); break; case 'p1m1': candidatePaths.push(appTrans(trPath, tp_vr)); break; case 'p112': candidatePaths.push(appTrans(trPath, tp_rot)); break; case 'pmm2': candidatePaths.push(appTrans(trPath, tp_hr)); candidatePaths.push(appTrans(trPath, tp_vr)); candidatePaths.push(appTrans(trPath, tp_rot)); break; case 'p1a1': candidatePaths.push(appTrans(trPath, tp_g)); break; case 'pma2': const vrPath = appTrans(trPath, tp_vr); candidatePaths.push(vrPath); const gPath = appTrans(trPath, tp_g); candidatePaths.push(gPath); candidatePaths.push(appTrans(gPath, tp_vr)); break; } candidatePaths.forEach(cp => { let pathVisible = false; for(const p of cp) { if (p.x >= -mg && p.x <= cW + mg && p.y >= -mg && p.y <= cH + mg) { pathVisible = true; break; } } if (pathVisible) tPaths.push(cp); }); } return tPaths; }
+            // --- Transformasi Simetri (Logika pm11 dan p1m1 ditukar) ---
+            function applySymmetry(x1, y1, x2, y2, symmetryGroupToUse) { const T = translationAmount; const canvasWidth = canvas.width; const canvasHeight = canvas.height; const midY = canvasHeight / 2; const points = []; const margin = Math.max(5, currentLineWidth * 2); const minXDraw = Math.min(x1, x2) - margin; const maxXDraw = Math.max(x1, x2) + margin; const minYDraw = Math.min(y1, y2) - margin; const maxYDraw = Math.max(y1, y2) + margin; const minN = Math.floor(-maxXDraw / T) - 2; const maxN = Math.ceil((canvasWidth - minXDraw) / T) + 2; for (let n = minN; n <= maxN; n++) { const offsetX = n * T; const t_t = (p) => ({ x1: p.x1 + offsetX, y1: p.y1, x2: p.x2 + offsetX, y2: p.y2 }); const rAx = offsetX + T / 2; const t_vr = (p) => ({ x1: 2 * rAx - p.x1, y1: p.y1, x2: 2 * rAx - p.x2, y2: p.y2 }); const t_hr = (p) => ({ x1: p.x1, y1: 2 * midY - p.y1, x2: p.x2, y2: 2 * midY - p.y2 }); const rCx = offsetX + T / 2; const rCy = midY; const t_rot = (p) => ({ x1: 2 * rCx - p.x1, y1: 2 * rCy - p.y1, x2: 2 * rCx - p.x2, y2: 2 * rCy - p.y2 }); const t_g = (p) => ({ x1: p.x1 + T / 2, y1: 2 * midY - p.y1, x2: p.x2 + T / 2, y2: 2 * midY - p.y2 }); const b = { x1, y1, x2, y2 }; const tr = t_t(b); const candidates = [tr]; switch (symmetryGroupToUse) { case 'p111': break; case 'pm11': candidates.push(t_vr(tr)); break; /* MODIFIED: Was t_hr */ case 'p1m1': candidates.push(t_hr(tr)); break; /* MODIFIED: Was t_vr */ case 'p112': candidates.push(t_rot(tr)); break; case 'pmm2': candidates.push(t_hr(tr)); candidates.push(t_vr(tr)); candidates.push(t_rot(tr)); break; case 'p1a1': candidates.push(t_g(tr)); break; case 'pma2': const vr_pma2 = t_vr(tr); candidates.push(vr_pma2); const g_pma2 = t_g(tr); candidates.push(g_pma2); candidates.push(t_vr(g_pma2)); break; } candidates.forEach(p => { const pMinX = Math.min(p.x1, p.x2); const pMaxX = Math.max(p.x1, p.x2); const pMinY = Math.min(p.y1, p.y2); const pMaxY = Math.max(p.y1, p.y2); if (pMaxX >= -margin && pMinX <= canvasWidth + margin && pMaxY >= -margin && pMinY <= canvasHeight + margin) { points.push(p); } }); } return points; }
+            function applySymmetryToPath(path, symmetryGroupToUse) { if (!path || path.length === 0) return []; const T = translationAmount; const cW = canvas.width; const cH = canvas.height; const mY = cH / 2; const tPaths = []; const mg = Math.max(5, currentLineWidth * 2); let minX = path[0].x, maxX = path[0].x, minY = path[0].y, maxY = path[0].y; path.forEach(p => { minX = Math.min(minX, p.x); maxX = Math.max(maxX, p.x); minY = Math.min(minY, p.y); maxY = Math.max(maxY, p.y); }); minX -= mg; maxX += mg; minY -= mg; maxY += mg; const minN = Math.floor(-maxX / T) - 2; const maxN = Math.ceil((cW - minX) / T) + 2; for (let n = minN; n <= maxN; n++) { const oX = n * T; const tp_t = (p) => ({ x: p.x + oX, y: p.y }); const rAx = oX + T / 2; const tp_vr = (p) => ({ x: 2 * rAx - p.x, y: p.y }); const tp_hr = (p) => ({ x: p.x, y: 2 * mY - p.y }); const rCx = oX + T / 2; const rCy = mY; const tp_rot = (p) => ({ x: 2 * rCx - p.x, y: 2 * rCy - p.y }); const tp_g = (p) => ({ x: p.x + T / 2, y: 2 * mY - p.y }); const appTrans = (op, pt) => op.map(pt); const trPath = appTrans(path, tp_t); const candidatePaths = [trPath]; switch (symmetryGroupToUse) { case 'p111': break; case 'pm11': candidatePaths.push(appTrans(trPath, tp_vr)); break; /* MODIFIED: Was tp_hr */ case 'p1m1': candidatePaths.push(appTrans(trPath, tp_hr)); break; /* MODIFIED: Was tp_vr */ case 'p112': candidatePaths.push(appTrans(trPath, tp_rot)); break; case 'pmm2': candidatePaths.push(appTrans(trPath, tp_hr)); candidatePaths.push(appTrans(trPath, tp_vr)); candidatePaths.push(appTrans(trPath, tp_rot)); break; case 'p1a1': candidatePaths.push(appTrans(trPath, tp_g)); break; case 'pma2': const vrPath = appTrans(trPath, tp_vr); candidatePaths.push(vrPath); const gPath = appTrans(trPath, tp_g); candidatePaths.push(gPath); candidatePaths.push(appTrans(gPath, tp_vr)); break; } candidatePaths.forEach(cp => { let pathVisible = false; for(const p of cp) { if (p.x >= -mg && p.x <= cW + mg && p.y >= -mg && p.y <= cH + mg) { pathVisible = true; break; } } if (pathVisible) tPaths.push(cp); }); } return tPaths; }
 
             // --- Menggambar Primitif (Same as before) ---
             function drawPrimitive(x1, y1, x2, y2, tool, targetCtx) { targetCtx.beginPath(); const w = x2 - x1; const h = y2 - y1; switch (tool) { case 'line': targetCtx.moveTo(x1, y1); targetCtx.lineTo(x2, y2); targetCtx.stroke(); break; case 'rectangle': case 'filledRect': targetCtx.rect(x1, y1, w, h); if (tool === 'filledRect') targetCtx.fill(); else targetCtx.stroke(); break; case 'oval': case 'filledOval': const rX = Math.abs(w / 2); const rY = Math.abs(h / 2); const cX = x1 + w / 2; const cY = y1 + h / 2; if (rX > 0 && rY > 0) { targetCtx.ellipse(cX, cY, rX, rY, 0, 0, 2 * Math.PI); if (tool === 'filledOval') targetCtx.fill(); else targetCtx.stroke(); } else if (rX > 0 || rY > 0) { } else { drawDot(x1,y1, targetCtx); } break; } }
             function drawFreehandPath(path, targetCtx) { if (!path || path.length === 0) return; targetCtx.beginPath(); targetCtx.moveTo(path[0].x, path[0].y); if (path.length === 1) drawDot(path[0].x, path[0].y, targetCtx); else { for (let i = 1; i < path.length; i++) targetCtx.lineTo(path[i].x, path[i].y); targetCtx.stroke(); } }
             function drawDot(x, y, targetCtx) { const r = Math.max(0.5, targetCtx.lineWidth / 2); targetCtx.fillStyle = targetCtx.strokeStyle; targetCtx.beginPath(); targetCtx.ellipse(x, y, r, r, 0, 0, 2 * Math.PI); targetCtx.fill(); }
 
-            // --- Grid Dinamis (Same as before) ---
+            // --- Grid Dinamis (Logika pm11 dan p1m1 ditukar) ---
             function toggleGrid() { gridCanvas.style.display = showGridCheck.checked ? 'block' : 'none'; if (showGridCheck.checked) drawGrid(); else gridCtx.clearRect(0, 0, gridCanvas.width, gridCanvas.height); }
-            function drawGrid() { if (!showGridCheck.checked) { gridCtx.clearRect(0, 0, gridCanvas.width, gridCanvas.height); return; } gridCtx.clearRect(0, 0, gridCanvas.width, gridCanvas.height); const T = translationAmount; const mY = gridCanvas.height / 2; const w = gridCanvas.width; const h = gridCanvas.height; const rotR = 4; gridCtx.save(); gridCtx.lineWidth = 1; const st = getComputedStyle(document.documentElement); const gC = st.getPropertyValue('--grid-color').trim() || '#B0BEC5'; const gMC = st.getPropertyValue('--grid-mid-color').trim() || '#90A4AE'; const gRC = st.getPropertyValue('--grid-reflect-color').trim() || '#F1948A'; const gGC = st.getPropertyValue('--grid-glide-color').trim() || '#76D7C4'; const gRotC = st.getPropertyValue('--grid-rot-color').trim() || '#AF7AC5'; gridCtx.strokeStyle = gC; gridCtx.setLineDash([4, 4]); const minNGrid = Math.floor(-w / T) - 2; const maxNGrid = Math.ceil(w / T) + 2; for (let n = minNGrid; n <= maxNGrid; n++) { const x = n * T; if (x > -5 && x < w + 5) { gridCtx.beginPath(); gridCtx.moveTo(x, 0); gridCtx.lineTo(x, h); gridCtx.stroke(); } } gridCtx.setLineDash([]); switch (currentSymmetryGroup) { case 'pm11': case 'pmm2': gridCtx.strokeStyle = gMC; gridCtx.lineWidth = 1.2; gridCtx.beginPath(); gridCtx.moveTo(0, mY); gridCtx.lineTo(w, mY); gridCtx.stroke(); break; case 'p1a1': case 'pma2': gridCtx.strokeStyle = gGC; gridCtx.lineWidth = 1.2; gridCtx.setLineDash([8, 4]); gridCtx.beginPath(); gridCtx.moveTo(0, mY); gridCtx.lineTo(w, mY); gridCtx.stroke(); break; default: gridCtx.strokeStyle = gMC; gridCtx.lineWidth = 0.8; gridCtx.setLineDash([2, 3]); gridCtx.beginPath(); gridCtx.moveTo(0, mY); gridCtx.lineTo(w, mY); gridCtx.stroke(); break; } gridCtx.setLineDash([]); gridCtx.lineWidth = 1; for (let n = minNGrid; n <= maxNGrid; n++) { const cX = n * T + T / 2; if (cX > -rotR && cX < w + rotR) { if (currentSymmetryGroup === 'p1m1' || currentSymmetryGroup === 'pmm2' || currentSymmetryGroup === 'pma2') { gridCtx.strokeStyle = gRC; gridCtx.lineWidth = 1.2; gridCtx.beginPath(); gridCtx.moveTo(cX, 0); gridCtx.lineTo(cX, h); gridCtx.stroke(); } if (currentSymmetryGroup === 'p112' || currentSymmetryGroup === 'pmm2' || currentSymmetryGroup === 'pma2') { gridCtx.fillStyle = gRotC; gridCtx.beginPath(); gridCtx.ellipse(cX, mY, rotR, rotR, 0, 0, 2 * Math.PI); gridCtx.fill(); } } } gridCtx.restore(); }
+            function drawGrid() { if (!showGridCheck.checked) { gridCtx.clearRect(0, 0, gridCanvas.width, gridCanvas.height); return; } gridCtx.clearRect(0, 0, gridCanvas.width, gridCanvas.height); const T = translationAmount; const mY = gridCanvas.height / 2; const w = gridCanvas.width; const h = gridCanvas.height; const rotR = 4; gridCtx.save(); gridCtx.lineWidth = 1; const st = getComputedStyle(document.documentElement); const gC = st.getPropertyValue('--grid-color').trim() || '#B0BEC5'; const gMC = st.getPropertyValue('--grid-mid-color').trim() || '#90A4AE'; /* Horizontal Axis Color */ const gRC = st.getPropertyValue('--grid-reflect-color').trim() || '#F1948A'; /* Vertical Axis Color */ const gGC = st.getPropertyValue('--grid-glide-color').trim() || '#76D7C4'; const gRotC = st.getPropertyValue('--grid-rot-color').trim() || '#AF7AC5'; gridCtx.strokeStyle = gC; gridCtx.setLineDash([4, 4]); const minNGrid = Math.floor(-w / T) - 2; const maxNGrid = Math.ceil(w / T) + 2; for (let n = minNGrid; n <= maxNGrid; n++) { const x = n * T; if (x > -5 && x < w + 5) { gridCtx.beginPath(); gridCtx.moveTo(x, 0); gridCtx.lineTo(x, h); gridCtx.stroke(); } } gridCtx.setLineDash([]); /* Draw horizontal midline based on symmetry */ switch (currentSymmetryGroup) { case 'p1m1': /* MODIFIED: Was pm11 */ case 'pmm2': gridCtx.strokeStyle = gMC; gridCtx.lineWidth = 1.2; gridCtx.beginPath(); gridCtx.moveTo(0, mY); gridCtx.lineTo(w, mY); gridCtx.stroke(); break; case 'p1a1': case 'pma2': gridCtx.strokeStyle = gGC; gridCtx.lineWidth = 1.2; gridCtx.setLineDash([8, 4]); gridCtx.beginPath(); gridCtx.moveTo(0, mY); gridCtx.lineTo(w, mY); gridCtx.stroke(); break; default: /* For p111, pm11 (now vertical), p112 */ gridCtx.strokeStyle = gMC; gridCtx.lineWidth = 0.8; gridCtx.setLineDash([2, 3]); gridCtx.beginPath(); gridCtx.moveTo(0, mY); gridCtx.lineTo(w, mY); gridCtx.stroke(); break; } gridCtx.setLineDash([]); gridCtx.lineWidth = 1; /* Draw vertical lines and rotation points */ for (let n = minNGrid; n <= maxNGrid; n++) { const cX = n * T + T / 2; if (cX > -rotR && cX < w + rotR) { /* Draw vertical reflection lines */ if (currentSymmetryGroup === 'pm11' || currentSymmetryGroup === 'pmm2' || currentSymmetryGroup === 'pma2') { /* MODIFIED: Added pm11, removed p1m1 */ gridCtx.strokeStyle = gRC; gridCtx.lineWidth = 1.2; gridCtx.beginPath(); gridCtx.moveTo(cX, 0); gridCtx.lineTo(cX, h); gridCtx.stroke(); } /* Draw rotation points */ if (currentSymmetryGroup === 'p112' || currentSymmetryGroup === 'pmm2' || currentSymmetryGroup === 'pma2') { gridCtx.fillStyle = gRotC; gridCtx.beginPath(); gridCtx.ellipse(cX, mY, rotR, rotR, 0, 0, 2 * Math.PI); gridCtx.fill(); } } } gridCtx.restore(); }
 
             // --- Simpan / Muat JSON ---
             function saveJson() { if (drawingActions.length === 0) { alert("Tidak ada data untuk disimpan."); return; } const data = { version: 1.8, translationAmount: translationAmount, actions: drawingActions }; const str = JSON.stringify(data, null, 2); const blob = new Blob([str], { type: 'application/json' }); const url = URL.createObjectURL(blob); const a = document.createElement('a'); const t = new Date().toISOString().replace(/[:.]/g, '-'); a.download = `frieze_drawing_${currentSymmetryGroup}_T${translationAmount}_${t}.json`; a.href = url; document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url); }
