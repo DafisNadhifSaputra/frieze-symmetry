@@ -55,7 +55,7 @@ Aplikasi ini ideal untuk:
 
 ## Demo
 
-Lihat demo langsung dari aplikasi [di sini]([https://your-demo-link.com](https://dafisnadhifsaputra.github.io/frieze-symmetry/)).
+Lihat demo langsung dari aplikasi [di sini]([https://dafisnadhifsaputra.github.io/frieze-symmetry/]).
 
 ## Grup Simetri Frieze yang Didukung
 
