@@ -97,5 +97,3 @@ Hak Cipta © 2025 Dafis Nadhif Saputra. Hak Cipta Dilindungi.
 Aplikasi ini dibuat dan dikembangkan oleh Dafis Nadhif Saputra.
 
 ---
-
-**Catatan**: Tambahkan screenshot aplikasi di folder `screenshots/` sebelum men-deploy ke GitHub untuk memperbaiki tampilan README.
